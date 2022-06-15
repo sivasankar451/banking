@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>CryptoZombies front-end</title>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script language="javascript" type="text/javascript" src="banking_abi.js"></script>
+  </head>
+  <body>
+    <div id="txStatus"></div>
+    <div id="zombies"></div>
+	<div id="container">
+	<div>Assign Child : <input type="text" id="txtAssignChild" /></div>
+	<div>Approve : <input type="text" id="txtApproveChild" /><input type="text" id="txtApproveAmount" /></div>
+	<div>Deposit : <input type="text" id="txtDeposit" /></div>
+	<div>Withdraw : <input type="text" id="txtWithdraw" /></div>
+	<div>Balance Of : <input type="text" id="txtBalanceOf" /> <span id="lblBalance"></span></div>
+	
+	</div>
+
+    <script>
+      var banking;
+      var userAccount;
+	  var owner="";
+	  var child="";
+	  var web3js;
+
+      function startApp() {
+        var bankingContractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+        banking = new web3js.eth.Contract(bankingABI, bankingContractAddress);
+		
+		var accountInterval = setInterval(function() {
+          // Check if account has changed
+          if (web3.eth.accounts[0] !== userAccount) {
+            userAccount = web3.eth.accounts[0];
+          }
+        }, 100);
+
+      }
+	  
+	  function assignChild(){
+		return banking.methods.assignChild($("#txtAssignChild").text())
+        .send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Assigned child");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+	  }
+	  
+	  function approve(){
+		return banking.methods.approve($("#txtApproveChild").text(), $("#txtApproveAmount").text())
+        .send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Approved");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+	  }
+	  
+	  function deposit(){
+		return banking.methods.deposit()
+        .send({ from: userAccount, value: $("#txtDeposit").text()})
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Deposited");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+	  }
+	  
+	  function withdraw(){
+		return banking.methods.withdraw($("#txtDeposit").text())
+        .send({ from: userAccount, value: $("#txtWithdraw").text() })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Withdrawn");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+	  }
+	  
+	  function getBalanceOf() {
+        return banking.methods.balanceOf($("#txtBalanceOf").text()).call()
+		.then(function(balance) {
+            $("#lblBalance").text(balance);
+          });
+      }
+
+      window.addEventListener('load', function() {
+
+        // Checking if Web3 has been injected by the browser (Mist/MetaMask)
+        if (typeof web3 !== 'undefined') {
+          // Use Mist/MetaMask's provider
+          web3js = new Web3(web3.currentProvider);
+        } else {
+          // Handle the case where the user doesn't have Metamask installed
+          // Probably show them a message prompting them to install Metamask
+        }
+
+        // Now you can start your app & access web3 freely:
+        startApp()
+
+      })
+    </script>
+  </body>
+</html>
